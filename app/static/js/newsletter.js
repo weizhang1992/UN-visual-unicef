@@ -1,4 +1,4 @@
-/*----------------------Global Variables - Map-----------------------*/
+ /*----------------------Global Variables - Map-----------------------*/
   var categoryColors = {'Political/social unrest':'#66c2a5','conflict':'#fc8d62','disaster':'#8da0cb','food insecurity':'#e78ac3','disease':'#a6d854','water insecurity':'#ffd92f', 'population displacement': '#e5c494', '':'none'}
       
   var width = $('#map').width();
@@ -74,7 +74,8 @@
   /*----------------------Load data and call draw_all()-----------------------*/ 
   var map_data;
   var filtered_data;
-  var bars_padding = 3
+  var bars_padding = 3;
+  var doc; //report placeholder
 
   // load and display the World
   d3.json("static/data/world-110m2.json", function(error, topology) {
@@ -190,9 +191,17 @@
       d3.select("#story_text").html("");
       d3.select("#story_titles").html("");
       d3.select("#story_link").html("");
+      d3.select("#story_filtered").html("");
       //select current circle
       d3.select(this)
           .each(function(e) {
+            //initialize report
+            doc = new jsPDF('p','in','letter');
+            doc.setFontSize(12);
+            doc.setFont("times")
+            verticalOffset = 0.5;
+            var counter = 1;
+
               //iterate over all stories in circle
               e.values.forEach(function(v) {
                   var tags_svg = d3.select('#story_titles').append("p")
@@ -220,9 +229,86 @@
                       .attr('width',25)
                       .attr('height',15)
                       .attr('fill',categoryColors[v.category3]);
+
+                  var full_stories = d3.select('#story_filtered').append("p")
+                      .datum(v)
+                      .html(
+                        "<b>"+v.story_title+"</b> "+v.date
+                        +"<br><i>"+v.country+", "+v.region+"</i>"
+                        +"<br>"+v.story
+                        +"<br><i>"+v.link+"</i>"
+                      )
+                      .append('svg')
+                      .attr('width',300)
+                      .attr('height',15);;
+                  full_stories.append('rect')
+                      .attr('x',0)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category]);
+                  full_stories.append('rect')
+                      .attr('x',30)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category2]);
+                  full_stories.append('rect')
+                      .attr('x',60)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category3]);
+
+                  //prepare report
+
+                  if ((counter == 6) || (verticalOffset > 8)){
+                    doc.addPage();
+                    verticalOffset = 0.5;
+                  }
+
+                  
+                  //title
+                  lines = doc.setFontType("bold")
+                    .setFontSize(12)
+                    .splitTextToSize(v.story_title, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  //country, region
+                  lines = doc.setFontType("italic")
+                    .splitTextToSize(v.date+" - "+v.country+", "+v.region, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+
+                  //story
+                  lines = doc.setFontType("normal")
+                    .splitTextToSize(v.story, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+                  
+                  //source
+                  lines = doc.setFontType("italic")
+                    .setFontSize(10)
+                    .splitTextToSize(v.link, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  //new line
+                  lines = doc.setFontType("italic")
+                    .setFontSize(14)
+                    .splitTextToSize(" ", 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  counter +=1;
+
+
               });
           });
   }
+
 
   function select_headline(d){
       d3.selectAll('p').attr('class', 'story');
@@ -256,6 +342,8 @@
       d3.select("#story_text").html("");
       d3.select("#story_titles").html("");
       d3.select("#story_link").html("");
+      d3.select("#story_filtered").html("");
+
       //removing the current SVG of the trend graph
       d3.select("#trend").select("#trendg").remove();
       //creating a new SVG in the proper size
@@ -377,6 +465,7 @@
       }
       function brushmove() {
           var s = brush.extent();
+          var parsedSelectedDate;
           var filtered_data_date = filtered_data.filter(function(d){
               parsedSelectedDate = parseDate(d.week_year);
               var include_point = parsedSelectedDate >= s[0] && parsedSelectedDate <= s[1];
@@ -386,17 +475,36 @@
           d3.select("#story_text").html("");
           d3.select("#story_titles").html("");
           d3.select("#story_link").html("");
+          d3.select("#story_filtered").html("");
           draw_circles(filtered_data_date);
+          
+          //display date below the brush
+          var displayDate = d3.time.format("%a, %B %e %Y");  
+          var startDate = s[0];
+          var endDate = s[1];
+          d3.select("#date_display_start").text(displayDate(startDate));
+          d3.select("#date_display_end").text(displayDate(endDate));
+
+
       }
       function brushend() {
             svg.classed("selecting", !d3.event.target.empty());
+            //display stories
+            var s = brush.extent();
       }
-  }  
+  } 
+
+  /*--------------------------------Generate report--------------------------------*/
+  function generate_report(){
+
+    doc.save("OPSCEN News Brief Report.pdf")
+
+  }
   
   /*--------------------------------Search Bar--------------------------------*/
 
   var entities_mapping = {};
-  d3.csv('static/data/entities.txt', function(error, data) {
+  d3.csv("static/data/entities.txt", function(error, data) {
       var entities_nest = d3.nest()
           .key(function(d){return d.entity;})
           .sortKeys(d3.ascending)

@@ -79,13 +79,14 @@
 
     <div class="row">
         <div id="heading" class="u-max-full-width">
-            <h5> Visualizing Crisis News Briefs </h5>
+            <h5> Visualizing Crisis News Briefs <span>2.0</span></h5>
             <form action="upload" method="post" enctype="multipart/form-data">
                <input type="file" name="file" /><br />
                <input type="submit" value="Upload" />
              </form>
         </div>
     </div>
+
 
 <!-- ROW CONTAINING BUTTONS AND SEARCH BAR -->
     <div class="row">
@@ -109,16 +110,23 @@
         <div class="nine columns" >
             <div id="map" style="background: #dbf2fb; overflow: hidden;"> </div>
             <div id="trend" style="overflow: hidden;"></div>
+            <div id="date_display">
+              <div id="date_display_start" style="float:left;"></div>
+              <div id="date_display_end" style="float:right;"></div>
+            </div>
         </div>
 
   <!-- COLUMN WITH STORY DETAILS -->
         <div id="info_panel" class="three columns"> 
             <div>
                 <h5><span id="c_name"></span></h5>
+                <h6>Filtered News &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button onClick="generate_report()">Generate Report</button></h6>
+                  <div id="story_filtered" style='height: 220px; overflow: scroll; padding: 5px; margin: 0px 0px 5px 0px; border: 1px solid #e4e4e4; cursor:pointer;'> </div>
+
                 <h6>All Headlines</h6>
                     <div id="story_titles" style='height: 220px; overflow: scroll; padding: 5px; margin: 0px 0px 5px 0px; border: 1px solid #e4e4e4; cursor:pointer;'> </div>
                 <h6>Full Story</h6>
-                    <div id="story_text" style='height: 250px; overflow: auto; padding: 5px; border: 1px solid #e4e4e4'> </div>  
+                    <div id="story_text" style='height: 250px; overflow: auto; padding: 5px; border: 1px solid #e4e4e4'> Muwaw</div>  
                 <h6>Source:</h6>
                     <div id="story_link" style='padding: 5px; overflow: auto; height: 30px; border: 1px solid #e4e4e4;'></div>
             </div>
@@ -129,11 +137,19 @@
 
 <!-- JS
 ================================================== -->
-<script src="static/js/d3.v3.min.js"></script>
-<script src="static/js/topojson.v0.min.js"></script>
-<script src="static/js/d3.tip.v0.6.3.js"></script>
-<script src="static/js/jquery-2.1.3.js"></script>
-<script src="static/js/jquery-ui.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/d3.v3.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/topojson.v0.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/d3.tip.v0.6.3.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.1.3.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/html2canvas.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jspdf.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jspdf.plugin.standard_fonts_metrics.js') }}"> 
+</script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jspdf.plugin.split_text_to_size.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jspdf.plugin.from_html.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/filesaver.js') }}"></script>
+
 <script>
 
   /*----------------------Global Variables - Map-----------------------*/
@@ -212,10 +228,11 @@
   /*----------------------Load data and call draw_all()-----------------------*/ 
   var map_data;
   var filtered_data;
-  var bars_padding = 3
+  var bars_padding = 3;
+  var doc; //report placeholder
 
   // load and display the World
-  d3.json("static/data/world-110m2.json", function(error, topology) {
+  d3.json("{{ url_for('static', filename='data/world-110m2.json') }}", function(error, topology) {
       g.selectAll("path")
           .data(topojson.object(topology, topology.objects.countries)
               .geometries)
@@ -226,7 +243,7 @@
     });
 
   // load the data once and draw the map and the trend chart
-  d3.csv("static/data/news_stories_final.csv", function(error, data) {
+  d3.csv("{{ url_for('static', filename='data/news_stories_final.csv') }}", function(error, data) {
       map_data = data
           .sort(function(a, b){
               var date1 = new Date(a.date),
@@ -328,9 +345,17 @@
       d3.select("#story_text").html("");
       d3.select("#story_titles").html("");
       d3.select("#story_link").html("");
+      d3.select("#story_filtered").html("");
       //select current circle
       d3.select(this)
           .each(function(e) {
+            //initialize report
+            doc = new jsPDF('p','in','letter');
+            doc.setFontSize(12);
+            doc.setFont("times")
+            verticalOffset = 0.5;
+            var counter = 1;
+
               //iterate over all stories in circle
               e.values.forEach(function(v) {
                   var tags_svg = d3.select('#story_titles').append("p")
@@ -358,9 +383,86 @@
                       .attr('width',25)
                       .attr('height',15)
                       .attr('fill',categoryColors[v.category3]);
+
+                  var full_stories = d3.select('#story_filtered').append("p")
+                      .datum(v)
+                      .html(
+                        "<b>"+v.story_title+"</b> "+v.date
+                        +"<br><i>"+v.country+", "+v.region+"</i>"
+                        +"<br>"+v.story
+                        +"<br><i>"+v.link+"</i>"
+                      )
+                      .append('svg')
+                      .attr('width',300)
+                      .attr('height',15);;
+                  full_stories.append('rect')
+                      .attr('x',0)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category]);
+                  full_stories.append('rect')
+                      .attr('x',30)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category2]);
+                  full_stories.append('rect')
+                      .attr('x',60)
+                      .attr('y',5)
+                      .attr('width',25)
+                      .attr('height',15)
+                      .attr('fill',categoryColors[v.category3]);
+
+                  //prepare report
+
+                  if ((counter == 6) || (verticalOffset > 8)){
+                    doc.addPage();
+                    verticalOffset = 0.5;
+                  }
+
+                  
+                  //title
+                  lines = doc.setFontType("bold")
+                    .setFontSize(12)
+                    .splitTextToSize(v.story_title, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  //country, region
+                  lines = doc.setFontType("italic")
+                    .splitTextToSize(v.date+" - "+v.country+", "+v.region, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+
+                  //story
+                  lines = doc.setFontType("normal")
+                    .splitTextToSize(v.story, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+                  
+                  //source
+                  lines = doc.setFontType("italic")
+                    .setFontSize(10)
+                    .splitTextToSize(v.link, 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  //new line
+                  lines = doc.setFontType("italic")
+                    .setFontSize(14)
+                    .splitTextToSize(" ", 7.5);
+                  doc.text(0.5, verticalOffset + 12 / 72, lines);
+                  verticalOffset += (lines.length + 0.5) * 12 / 72;
+
+                  counter +=1;
+
+
               });
           });
   }
+
 
   function select_headline(d){
       d3.selectAll('p').attr('class', 'story');
@@ -394,6 +496,8 @@
       d3.select("#story_text").html("");
       d3.select("#story_titles").html("");
       d3.select("#story_link").html("");
+      d3.select("#story_filtered").html("");
+
       //removing the current SVG of the trend graph
       d3.select("#trend").select("#trendg").remove();
       //creating a new SVG in the proper size
@@ -515,6 +619,7 @@
       }
       function brushmove() {
           var s = brush.extent();
+          var parsedSelectedDate;
           var filtered_data_date = filtered_data.filter(function(d){
               parsedSelectedDate = parseDate(d.week_year);
               var include_point = parsedSelectedDate >= s[0] && parsedSelectedDate <= s[1];
@@ -524,17 +629,36 @@
           d3.select("#story_text").html("");
           d3.select("#story_titles").html("");
           d3.select("#story_link").html("");
+          d3.select("#story_filtered").html("");
           draw_circles(filtered_data_date);
+          
+          //display date below the brush
+          var displayDate = d3.time.format("%a, %B %e %Y");  
+          var startDate = s[0];
+          var endDate = s[1];
+          d3.select("#date_display_start").text(displayDate(startDate));
+          d3.select("#date_display_end").text(displayDate(endDate));
+
+
       }
       function brushend() {
             svg.classed("selecting", !d3.event.target.empty());
+            //display stories
+            var s = brush.extent();
       }
-  }  
+  } 
+
+  /*--------------------------------Generate report--------------------------------*/
+  function generate_report(){
+
+    doc.save("OPSCEN News Brief Report.pdf")
+
+  }
   
   /*--------------------------------Search Bar--------------------------------*/
 
   var entities_mapping = {};
-  d3.csv('static/data/entities.txt', function(error, data) {
+  d3.csv("{{ url_for('static', filename='data/entities.txt') }}", function(error, data) {
       var entities_nest = d3.nest()
           .key(function(d){return d.entity;})
           .sortKeys(d3.ascending)

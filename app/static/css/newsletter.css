@@ -1,0 +1,62 @@
+#uploadform{
+	height:50px;
+	board:black;
+}
+
+#uploadform form #choosefile{
+	
+	width:28%;
+   margin: 20px;
+   display: inline-block;
+   float:left;
+}
+#uploadform form #uploadbutton{
+	margin: 15px;
+   width:14%;
+   margin: 0px;
+   display: inline-block;
+   float:left;
+}
+
+.full-width-container {
+    width: 100%;
+    max-width: 95%;
+    clear: both;
+    margin: 30px;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.d3-tip {
+    line-height: 1;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+}
+.circle_unselected {
+    fill: #525252;
+    opacity: 0.7;
+}
+.circle_selected {
+    fill: #1CACE2;
+    stroke: #bdbdbd;
+    opacity: 0.7;
+}
+.story {
+    background: none;
+}
+.story_selected {
+    background: #d9d9d9;
+}
+.map {
+    fill: #f0f0f0;
+    stroke: #bdbdbd;
+}
+.brush .extent {
+    fill-opacity: .125;
+    shape-rendering: crispEdges;
+}

@@ -13,7 +13,7 @@ app.secret_key=app.config['SECERT_KEY']
 db = SQLAlchemy(app)
 mail = Mail(app)
 
-UPLOAD_FOLDER = 'page/static/uploads'
+UPLOAD_FOLDER = 'app/static/uploads'
 @app.route("/upload",methods=['GET', 'POST'])
 def upload():
     if request.method == 'GET':

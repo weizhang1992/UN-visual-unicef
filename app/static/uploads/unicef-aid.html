@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <title>How Unicef Aid change</title>
+    <meta charset="utf-8">
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    
+    <link href='http://fonts.googleapis.com/css?family=Quicksand:300,400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    
+</head>
+<style>
+/*map*/
+body{
+	background-color: #eee;
+}
+
+#unmap{
+	position: fixed;
+	background-color: white;
+	width = 960,
+    height = 500;
+}
+#unmap path {
+	
+  stroke: white;
+  stroke-width: 0.25px;
+  fill: #5B92E5;
+}
+
+#legend{
+  background-color: white;
+  position: fixed;
+  left: 980px;
+  top: 380px;
+  bottom: 0px;
+  width: 450px;
+  height:170px;
+}
+
+
+
+
+
+
+#barchart2{
+  background-color: white;
+  position: fixed;
+  left: 10px;
+  top: 570px;
+  bottom: 0px;
+  width: 1500px;
+  height:130px;
+}
+
+
+/*barchart*/
+
+#barchart{
+background-color: white;
+  position: fixed;
+  left: 980px;
+  top: 50px;
+  bottom: 0px;
+  width: 450px;
+  height:300px;
+}
+
+#barchart rect {
+    fill: #2177BB;
+}
+
+.axis {
+	  font: 10px sans-serif;
+	}
+
+.axis path,
+.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+.line {
+  stroke: black; 
+  z-index: -10;
+  stroke-dasharray:50,500;
+  stroke-dashoffset: 500;
+  -webkit-animation: dash 1s;
+}
+@-webkit-keyframes dash {
+  from {
+    stroke-dashoffset: 550;
+  }
+  to {
+    stroke-dashoffset: 50;
+  }
+}
+
+
+</style>
+
+
+
+
+
+
+<body>
+<p>how unicef aid change</p>
+<div id="unmap">
+    
+</div>
+
+<div id="barchart">
+</div>
+<div id="legend">
+<p id="sss">legend</p>
+</div> 
+<div id="barchart2">
+<p>barchart2</p>
+</div> 
+
+
+
+
+
+
+
+<script src="unicef-data/d3.min.js" charset="utf-8"></script>
+ <script src="http://d3js.org/topojson.v0.min.js"></script>
+<script>
+var rect = document.getElementById("sss").getBoundingClientRect();
+console.log(rect.top, rect.right, rect.bottom, rect.left);
+//***********
+//** unmap **
+//***********
+var width = 960,
+    height = 500;
+
+var projection = d3.geo.mercator()
+    .center([0, 5 ])
+    .scale(150)
+    .rotate([-180,0]);
+
+var svg = d3.select("#unmap").append("svg")
+    .attr("id","unmap1")
+    .attr("width", width)
+    .attr("height", height);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var g = svg.append("g");
+
+// load and display the World
+d3.json("unicef-data/world-110m2.json", function(error, topology) {
+    g.selectAll("path")
+      .data(topojson.object(topology, topology.objects.countries).geometries)
+      .enter()
+      .append("path")
+      .attr("d", path)
+});
+
+// var zoom = d3.behavior.zoom()
+//     .on("zoom",function() {
+//         g.attr("transform","translate("+ 
+//             d3.event.translate.join(",")+")scale("+d3.event.scale+")");
+//         g.selectAll("path")  
+//             .attr("d", path.projection(projection)); 
+// });
+
+// svg.call(zoom)
+
+
+d3.select("#unmap1")
+    .append("line")
+    .attr("class", "line")
+    .attr("x1", 100)
+    .attr("y1", 100)
+    .attr("x2", 400)
+    .attr("y2", 500)
+    
+
+
+
+//***************
+//** bar chart **
+//***************
+var margin = {top: 20, right: 20, bottom: 70, left: 40},
+    width = 450 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+
+// Parse the date / time
+var	parseDate = d3.time.format("%Y-%m").parse;
+
+var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+
+var y = d3.scale.linear().range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickFormat(d3.time.format("%Y-%m"));
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(10);
+
+var svg = d3.select("#barchart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("unicef-data/bar-data.csv", function(error, data) {
+
+    data.forEach(function(d) {
+        d.date = parseDate(d.date);
+        d.value = +d.value;
+    });
+	
+  x.domain(data.map(function(d) { return d.date; }));
+  y.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+    .selectAll("text")
+      .style("text-anchor", "end")
+      .attr("dx", "-.8em")
+      .attr("dy", "-.55em")
+      .attr("transform", "rotate(-90)" );
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Value ($)");
+
+  svg.selectAll("bar")
+      .data(data)
+    .enter().append("rect")
+      .style("fill", "steelblue")
+      .attr("x", function(d) { return x(d.date); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.value); })
+      .attr("height", function(d) { return height - y(d.value); });
+
+});
+
+//***************
+//** bar chart2 **
+//***************
+// var margin = {top: 20, right: 20, bottom: 70, left: 40},
+//     width = 1500 - margin.left - margin.right,
+//     height = 130 - margin.top - margin.bottom;
+
+// // Parse the date / time
+// var	parseDate = d3.time.format("%Y-%m").parse;
+
+// var x = d3.scale.ordinal().rangeRoundBands([0, width], .05);
+
+// var y = d3.scale.linear().range([height, 0]);
+
+// var xAxis = d3.svg.axis()
+//     .scale(x)
+//     .orient("bottom")
+//     .tickFormat(d3.time.format("%Y-%m"));
+
+// var yAxis = d3.svg.axis()
+//     .scale(y)
+//     .orient("left")
+//     .ticks(10);
+
+// var svg = d3.select("#barchart2").append("svg")
+//     .attr("width", width + margin.left + margin.right)
+//     .attr("height", height + margin.top + margin.bottom)
+//   .append("g")
+//     .attr("transform", 
+//           "translate(" + margin.left + "," + margin.top + ")");
+
+// d3.csv("unicef-data/bar-data.csv", function(error, data) {
+
+//     data.forEach(function(d) {
+//         d.date = parseDate(d.date);
+//         d.value = +d.value;
+//     });
+	
+//   x.domain(data.map(function(d) { return d.date; }));
+//   y.domain([0, d3.max(data, function(d) { return d.value; })]);
+
+//   svg.append("g")
+//       .attr("class", "x axis")
+//       .attr("transform", "translate(0," + height + ")")
+//       .call(xAxis)
+//     .selectAll("text")
+//       .style("text-anchor", "end")
+//       .attr("dx", "-.8em")
+//       .attr("dy", "-.55em")
+//       .attr("transform", "rotate(-90)" );
+
+//   svg.append("g")
+//       .attr("class", "y axis")
+//       .call(yAxis)
+//     .append("text")
+//       .attr("transform", "rotate(-90)")
+//       .attr("y", 6)
+//       .attr("dy", ".71em")
+//       .style("text-anchor", "end")
+//       .text("Value ($)");
+
+//   svg.selectAll("bar")
+//       .data(data)
+//     .enter().append("rect")
+//       .style("fill", "steelblue")
+//       .attr("x", function(d) { return x(d.date); })
+//       .attr("width", x.rangeBand())
+//       .attr("y", function(d) { return y(d.value); })
+//       .attr("height", function(d) { return height - y(d.value); });
+
+// });
+
+</script>
+</body>
+</html>

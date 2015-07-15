@@ -1,2 +1,1 @@
-contact book 
-Use python + Flask + SQLALchemy + bootstrap
+Visualization project for UNICEF

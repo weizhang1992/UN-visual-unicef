@@ -67,6 +67,7 @@
   var brush;
   //defining a function which gets a string and parse it into a real date type
   var parseDate = d3.time.format("%w/%U/%Y").parse;
+  var parseExactDate = d3.time.format("%m/%d/%Y").parse;
   var svg_trend = d3.select("#trend").append("svg")
       .attr("width", width_trend + margin_trend.left + margin_trend.right)
       .attr("height", height_trend + margin_trend.top + margin_trend.bottom) 
@@ -103,15 +104,18 @@
               return 0;
           });
 
-      minStartDate = parseDate(d3.min(map_data,function(d){return d.week_year;}));
-      maxStartDate = parseDate(d3.max(map_data,function(d){return d.week_year;}));
+      minStartDate = parseExactDate(d3.min(map_data,function(d){return d.date;}));
+      maxStartDate = parseExactDate(d3.max(map_data,function(d){return d.date;}));
+      minStartWeek = parseDate(d3.min(map_data,function(d){return d.week_year;}));
+      maxStartWeek = parseDate(d3.max(map_data,function(d){return d.week_year;}));
+
       var oneWeek = 24*60*60*1000*7; 
-      var numberOfBars = Math.ceil((maxStartDate-minStartDate)/oneWeek);
+      var numberOfBars = Math.ceil((maxStartWeek-minStartWeek)/oneWeek);
       barWidth = width_trend/(numberOfBars);
       barWidth = barWidth - bars_padding;
-      maxStartDate = d3.time.week.offset(maxStartDate,1);
+      maxStartWeek = d3.time.week.offset(maxStartWeek,1);
       x = d3.time.scale()
-          .domain([d3.time.week.offset(minStartDate,-1), maxStartDate])
+          .domain([d3.time.week.offset(minStartWeek,-1), maxStartWeek])
           .rangeRound([0, width_trend]);
       xAxis = d3.svg.axis()
           .scale(x)
@@ -392,7 +396,7 @@
               return 1;
           }
           return 0;
-      });      
+      });     
       //drawing the stacked bar chart      
       var y = d3.scale.linear()
           .rangeRound([height_trend, 0]);       
@@ -433,14 +437,14 @@
 
   /*--------------------------------Populate on Load---------------------*/ 
   function populate_on_load(){
-      $("circle[country='Across Regions']").d3Click()
+      $("circle").d3Click()
   }
 
   /*--------------------------------Brush--------------------------------*/  
   function draw_brush(svg){
       brush = d3.svg.brush()
           .x(x)
-          .extent([minStartDate, maxStartDate])
+          .extent([d3.time.day.offset(maxStartDate,-1), maxStartDate])
           .on("brushstart", brushstart)
           .on("brush", brushmove)
           .on("brushend", brushend);
@@ -467,8 +471,10 @@
           var s = brush.extent();
           var parsedSelectedDate;
           var filtered_data_date = filtered_data.filter(function(d){
-              parsedSelectedDate = parseDate(d.week_year);
+              //commented to enable exact days news filtering feature
+              parsedSelectedDate = parseExactDate(d.date);
               var include_point = parsedSelectedDate >= s[0] && parsedSelectedDate <= s[1];
+              //console.log(s[0],parsedSelectedDate,s[1])
               return include_point;
           });
           //clear out text in sidebar boxes
@@ -477,6 +483,7 @@
           d3.select("#story_link").html("");
           d3.select("#story_filtered").html("");
           draw_circles(filtered_data_date);
+
           
           //display date below the brush
           var displayDate = d3.time.format("%a, %B %e %Y");  
@@ -496,9 +503,7 @@
 
   /*--------------------------------Generate report--------------------------------*/
   function generate_report(){
-
     doc.save("OPSCEN News Brief Report.pdf")
-
   }
   
   /*--------------------------------Search Bar--------------------------------*/

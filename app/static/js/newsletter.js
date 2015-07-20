@@ -148,16 +148,23 @@
           .key(function(d) { return (d.lng+","+d.lat);})
           .sortKeys(d3.ascending)
           .entries(filtered_data);
-      //calculate max values for rscale    
+      
+      //calculate max values for rscale
+      all_nested_data = d3.nest()
+      .key(function(d) { return (d.lng+","+d.lat);})
+      .sortKeys(d3.ascending)
+      .entries(map_data);
+      
       var max_number_stories;
       if (rscale==null){
-          max_number_stories = d3.max(nested_data,function(d){
+          max_number_stories = d3.max(all_nested_data,function(d){
               return d.values.length;
           });
           rscale = d3.scale.log()
           .domain([1,max_number_stories])
           .range([2,15]);
       }
+//      console.log(max_number_stories);
       //remove all current circles 
       g.selectAll("circle").remove();
 

@@ -77,6 +77,7 @@
   var filtered_data;
   var bars_padding = 3;
   var doc; //report placeholder
+  var active_circles = [];
 
   // load and display the World
   d3.json("static/data/world-110m2.json", function(error, topology) {
@@ -194,24 +195,44 @@
 
   function select_circle(d){
       // change circles styles
-      d3.selectAll('circle').attr('class', 'circle_unselected')
-      d3.select(this).attr('class', 'circle_selected');
-      //display country name
-      d3.select("#c_name").html(d.values[0].country);
+
+      if (d3.select(this).attr('class') == 'circle_unselected'){
+        d3.select(this).attr('class', 'circle_selected');
+        var thisCountry = d3.select(this).attr('country');
+        if (active_circles.indexOf(thisCountry) == -1) {
+          active_circles.push(thisCountry);
+        }
+      } else {
+        d3.select(this).attr('class', 'circle_unselected')
+        var index = active_circles.indexOf(d3.select(this).attr('country'));
+        if (index > -1) {
+          active_circles.splice(index, 1);
+        }
+      }
+      //d3.selectAll('circle').attr('class', 'circle_unselected')
+      
       //clear story text and title
       d3.select("#story_text").html("");
       d3.select("#story_titles").html("");
       d3.select("#story_link").html("");
       d3.select("#story_filtered").html("");
+
       //select current circle
-      d3.select(this)
+      d3.selectAll('circle')
+
           .each(function(e) {
-            //initialize report
-            doc = new jsPDF('p','in','letter');
-            doc.setFontSize(12);
-            doc.setFont("times")
-            verticalOffset = 0.5;
-            var counter = 1;
+
+            if (d3.select(this).attr('class') == 'circle_selected'){
+
+
+              
+
+              //initialize report
+              doc = new jsPDF('p','in','letter');
+              doc.setFontSize(12);
+              doc.setFont("times")
+              verticalOffset = 0.5;
+              var counter = 1;
 
               //iterate over all stories in circle
               e.values.forEach(function(v) {
@@ -315,9 +336,23 @@
 
                   counter +=1;
 
-
               });
+
+            }
+
+            //display country name
+            if (active_circles.length > 1){
+              d3.select("#c_name").html("Multiple Countries");
+            } else {
+              d3.select("#c_name").html(active_circles[0]);
+            }
+            
+
+            
+              
           });
+
+  console.log(active_circles)
   }
 
 
@@ -445,7 +480,27 @@
   /*--------------------------------Populate on Load---------------------*/ 
   function populate_on_load(){
       $("circle").d3Click()
+      
+      d3.selectAll('circle')
+        .each(function(e) {
+          var thisCountry = d3.select(this).attr('country');
+          if (active_circles.indexOf(thisCountry) == -1) {
+            active_circles.push(thisCountry);
+          }
+        })
   }
+
+  /*--------------------------------Populate after brushing ---------------------*/ 
+  function populate(){
+      d3.selectAll('circle')
+          .each(function(e) {
+            for (var i=0 ; i<active_circles.length ; i++){
+              if (d3.select(this).attr('country') == active_circles[i]){
+                $("circle[country='"+active_circles[i]+"']").d3Click()
+              }
+            }
+          })
+  };
 
   /*--------------------------------Brush--------------------------------*/  
   function draw_brush(svg){
@@ -481,7 +536,6 @@
               //commented to enable exact days news filtering feature
               parsedSelectedDate = parseExactDate(d.date);
               var include_point = parsedSelectedDate >= s[0] && parsedSelectedDate <= s[1];
-              //console.log(s[0],parsedSelectedDate,s[1])
               return include_point;
           });
           //clear out text in sidebar boxes
@@ -499,12 +553,15 @@
           d3.select("#date_display_start").text(displayDate(startDate));
           d3.select("#date_display_end").text(displayDate(endDate));
 
+          active_circles = [];
 
+          //populate the news
+          //console.log(active_circles)
+          
       }
       function brushend() {
             svg.classed("selecting", !d3.event.target.empty());
-            //display stories
-            var s = brush.extent();
+            //populate_on_load();
       }
   } 
 

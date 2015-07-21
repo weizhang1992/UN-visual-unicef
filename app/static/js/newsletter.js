@@ -188,6 +188,7 @@
 
   function select_circle(d){
       // change circles styles
+
       if (d3.select(this).attr('class') == 'circle_unselected'){
         d3.select(this).attr('class', 'circle_selected');
         var thisCountry = d3.select(this).attr('country');
@@ -343,6 +344,8 @@
             
               
           });
+
+  console.log(active_circles)
   }
 
 
@@ -542,6 +545,8 @@
           var endDate = s[1];
           d3.select("#date_display_start").text(displayDate(startDate));
           d3.select("#date_display_end").text(displayDate(endDate));
+
+          active_circles = [];
 
           //populate the news
           //console.log(active_circles)

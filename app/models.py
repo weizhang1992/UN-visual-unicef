@@ -1,4 +1,4 @@
-from page import db
+from app.view import db
 
 
 class contact(db.Model):

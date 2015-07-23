@@ -264,25 +264,25 @@ def upload():
         
         regions = ['Across Regions', 'LAC', 'CEE', 'WCA', 'ESA',  'MENA', 'EAP','Across SA']
         
-        df['country'][(df['country'].str.contains('EAP'))]='Across EAP'
-        df['country'][(df['country'].str.contains('ROSA'))]='Across SA'
-        df['country'][(df['country'].str.contains('Across Region'))]='Across Regions'
-        df['country'][(df['country'].str.contains('Across region'))]='Across Regions'
-        df['country'][(df['country'].str.contains('WCAR'))]='Across WCA'
-        df['country'][(df['country'].str.contains('Across West Africa'))]='Across WCA'
-        df['country'][(df['country'].str.contains('WAC'))]='Across WCA'
+        df[['country']][(df['country'].str.contains('EAP'))]='Across EAP'
+        df[['country']][(df['country'].str.contains('ROSA'))]='Across SA'
+        df[['country']][(df['country'].str.contains('Across Region'))]='Across Regions'
+        df[['country']][(df['country'].str.contains('Across region'))]='Across Regions'
+        df[['country']][(df['country'].str.contains('WCAR'))]='Across WCA'
+        df[['country']][(df['country'].str.contains('Across West Africa'))]='Across WCA'
+        df[['country']][(df['country'].str.contains('WAC'))]='Across WCA'
          
          
-        df['country'][(df['country'].str.contains('Palestine'))]='Israel/Palestine'
-        df['country'][(df['country'].str.contains('Israel'))]='Israel/Palestine'
-        df['country'][(df['country'].str.contains('Jerusalem'))]='Israel/Palestine'
+        df[['country']][(df['country'].str.contains('Palestine'))]='Israel/Palestine'
+        df[['country']][(df['country'].str.contains('Israel'))]='Israel/Palestine'
+        df[['country']][(df['country'].str.contains('Jerusalem'))]='Israel/Palestine'
          
          
         regional_lat = 0
         regional_lng = -136.4
         for region in regions:
-            df['lat'][(df['country'].str.contains(region))] = regional_lat
-            df['lng'][(df['country'].str.contains(region))] = regional_lng
+            df[['lat']][(df['country'].str.contains(region))] = regional_lat
+            df[['lng']][(df['country'].str.contains(region))] = regional_lng
             regional_lat = regional_lat - 7.5
             # print regional_lat
         

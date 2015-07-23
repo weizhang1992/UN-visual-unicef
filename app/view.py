@@ -5,12 +5,12 @@ from flask.ext.mail import Mail
 from werkzeug.utils import secure_filename
 import os
 import config
-
+import sys
+sys.path.append(os.getcwd()+'app/docx')
 
 from docx import Document
 from datetime import datetime
 import pandas as pd
-import numpy as np
 import string
 # importing my googleAddressLocator.py script as a module
 import googleAddressLocator as goog

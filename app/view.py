@@ -12,7 +12,6 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import string
-from pandas import Series, DataFrame
 # importing my googleAddressLocator.py script as a module
 import googleAddressLocator as goog
 from nltk import word_tokenize
@@ -26,8 +25,25 @@ app.secret_key=app.config['SECERT_KEY']
 db = SQLAlchemy(app)
 mail = Mail(app)
 UPLOAD_FOLDER = 'app/static/uploads'
-
-
+data = {'date':[], 'country':[], 'region':[], 'story':[], 'title': [], 'link':[], 'file_name':[]}
+flags = {'country':False,'story':False,'title':False,'link':False}
+currs = {'region':'','country':'', 'title': '', 'story':'', 'link': ''}
+stop_at = set(['UNICEF Operations Centre','Disclaimer:','The Brief is produced'])
+regions_codes = {'GENERAL':'General',
+                 'CEE/CIS':'Central and Eastern Europe and the Commonwealth of Independent States',
+                 'CEE/ CIS':'Central and Eastern Europe and the Commonwealth of Independent States', 
+                 'EAP':'East Asia and Pacific',
+                 'EAPR':'East Asia and Pacific',
+                 'ESA':'Eastern and Southern Africa',
+                 'LAC':'Latin America and the Caribbean',
+                 'MENA':'Middle East and North Africa',
+                 'ROSA':'South Asia',
+                 'WCA':'West and Central Africa',
+                 'WCAR':'West and Central Africa',
+                 'SA':'South Asia',
+                 'GENERAL':'General'
+                 }
+unique_countries = set()
 @app.route("/upload",methods=['GET', 'POST'])
 
 def upload():
@@ -39,26 +55,10 @@ def upload():
         fname = secure_filename(k.filename)    
         k.save(os.path.join(UPLOAD_FOLDER, fname))
         
-        ############ global variables ###############
-        data = {'date':[], 'country':[], 'region':[], 'story':[], 'title': [], 'link':[], 'file_name':[]}
-        flags = {'country':False,'story':False,'title':False,'link':False}
-        currs = {'region':'','country':'', 'title': '', 'story':'', 'link': ''}
-        stop_at = set(['UNICEF Operations Centre','Disclaimer:','The Brief is produced'])
-        regions_codes = {'GENERAL':'General',
-                         'CEE/CIS':'Central and Eastern Europe and the Commonwealth of Independent States',
-                         'CEE/ CIS':'Central and Eastern Europe and the Commonwealth of Independent States', 
-                         'EAP':'East Asia and Pacific',
-                         'EAPR':'East Asia and Pacific',
-                         'ESA':'Eastern and Southern Africa',
-                         'LAC':'Latin America and the Caribbean',
-                         'MENA':'Middle East and North Africa',
-                         'ROSA':'South Asia',
-                         'WCA':'West and Central Africa',
-                         'WCAR':'West and Central Africa',
-                         'SA':'South Asia',
-                         'GENERAL':'General'}
         
-        unique_countries = set()
+
+        
+        
         c = open('app/Preprocess/data/countries.txt','rb')
         for line in c:
             unique_countries.add(line.strip())
@@ -95,8 +95,10 @@ def upload():
                 date = doc.core_properties.modified
             return date
         
-        def read_lines(file_name, document, element): 
-
+        def read_lines(file_name, document, element,flags,data,currs,unique_countries): 
+            
+            
+            
             if sum([stop in element for stop in stop_at]) > 0:
                 return 
         
@@ -107,7 +109,7 @@ def upload():
                 currs['region'] = regions_codes[element]
                 flags['country'] = True
                 return 
-        
+            print element
             if flags['link'] and 'http' in element:
                 data['region'].append(currs['region'])
                 data['country'].append(currs['country'])
@@ -123,12 +125,14 @@ def upload():
                 return
         
             if flags['country']:
+                
                 if element in unique_countries:
                     currs['country'] = element
                     flags['country'] = False
                     flags['title'] = True
                     return 
                 else:
+                    
                     flags['country'] = False
                     flags['title'] = True
         
@@ -166,9 +170,9 @@ def upload():
                 a = p.text.split('\n')
                 if len(a)> 1:
                     for element in a:
-                        read_lines(fname, document, element.strip())
+                        read_lines(fname, document, element.strip(),flags,data,currs,unique_countries)
                 else:
-                    read_lines(fname, document, p.text.strip())
+                    read_lines(fname, document, p.text.strip(),flags,data,currs,unique_countries)
                 
     
         except Exception as e:
@@ -177,7 +181,7 @@ def upload():
         
         # bulding the data frame
         df = pd.DataFrame(data)
-        
+        print data['title']
         df['story_id']=df.index
         
         
@@ -214,7 +218,6 @@ def upload():
         # countries_simple is added for the stripped country names. We preserve
         #countries, above, as they are entered in documents, for the display text
         countries_simple = []
-        
         for curr_country in df['country'].values:
             formattedcountry = remove_punctuation(curr_country).strip().lower()
             if formattedcountry == 'car':
@@ -255,32 +258,32 @@ def upload():
             googleGeolocation = goog.address_locator(i)
             lat.append(googleGeolocation['lat'])
             lng.append(googleGeolocation['lng'])
+         
         
         # creating a dataframe with just the unique country names and their centroids
         centroids = pd.DataFrame(data={'country_simple': uniqueCountryList,
             'lat': lat, 'lng': lng})
         
         df = pd.merge(df, centroids, how='left', on='country_simple', left_index=False)
-        
         regions = ['Across Regions', 'LAC', 'CEE', 'WCA', 'ESA',  'MENA', 'EAP','Across SA']
-        
+                   
         df[['country']][(df['country'].str.contains('EAP'))]='Across EAP'
         df[['country']][(df['country'].str.contains('ROSA'))]='Across SA'
         df[['country']][(df['country'].str.contains('Across Region'))]='Across Regions'
         df[['country']][(df['country'].str.contains('Across region'))]='Across Regions'
         df[['country']][(df['country'].str.contains('WCAR'))]='Across WCA'
         df[['country']][(df['country'].str.contains('Across West Africa'))]='Across WCA'
-        df[['country']][(df['country'].str.contains('WAC'))]='Across WCA'
-         
-         
+        df[['country']][(df['country'].str.contains('WAC'))]='Across WCA'            
+           
         df[['country']][(df['country'].str.contains('Palestine'))]='Israel/Palestine'
         df[['country']][(df['country'].str.contains('Israel'))]='Israel/Palestine'
         df[['country']][(df['country'].str.contains('Jerusalem'))]='Israel/Palestine'
-         
-         
+          
+        
         regional_lat = 0
         regional_lng = -136.4
         for region in regions:
+            
             df[['lat']][(df['country'].str.contains(region))] = regional_lat
             df[['lng']][(df['country'].str.contains(region))] = regional_lng
             regional_lat = regional_lat - 7.5
@@ -313,7 +316,6 @@ def upload():
         tops = pd.read_csv('app/Preprocess/data/LDATopics.csv')
         df = pd.merge(newsLDA, tops, left_on= '250_topic', right_on = 'Topic')
         df = df.drop('250_topic', axis = 1)
-        
         word_dic = {'famine': 'food insecurity', 'food': 'food insecurity', 'harvest': 'food insecurity', 'hunger': 'food insecurity', 'drown': 'disaster', 'cyclone': 'disaster', 'tsunami': 'disaster', 'climate': 'disaster', 'flood': 'disaster', 'hurricane': 'disaster', 'storm': 'disaster', 'rain': 'disaster', 'wind': 'disaster', 'weather': 'disaster', 'typhoon': 'disaster', 'tornado': 'disaster', 'earthquake': 'disaster', 'MERS': 'disease', 'polio': 'disease', 'vaccine': 'disease', 'respiratory': 'disease', 'ebola': 'disease', 'disease': 'disease', 'dengue': 'disease', 'fever': 'disease', 'virus': 'disease', 'chikunguny': 'disease', 'Boko': 'conflict', 'diarrhea': 'disease', 'diarrhoea': 'disease', 'drought': 'water insecurity', 'water': 'water insecurity', 'refugee': 'population displacement', 'evacuate': 'population displacement', 'displace': 'population displacement', 'exodus': 'population displacement', 'flee': 'population displacement', 'HIV': 'disease', 'WHO': 'disease', 'health': 'disease','epidemic': 'disease', 'hospital': 'disease', 'health': 'disease', 'cholera': 'disease'}
         
         df['category2']=''

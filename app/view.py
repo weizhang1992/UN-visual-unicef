@@ -6,7 +6,8 @@ from werkzeug.utils import secure_filename
 import os
 import config
 import sys
-sys.path.append(os.getcwd()+'app/docx')
+sys.path.append('/app/app/docx')
+sys.path.append('/app/app/docx/api.py')
 
 from docx import Document
 from datetime import datetime

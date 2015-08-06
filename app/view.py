@@ -44,11 +44,27 @@ regions_codes = {'GENERAL':'General',
                  'GENERAL':'General'
                  }
 unique_countries = set()
-@app.route("/upload",methods=['GET', 'POST'])
 
+
+@app.route('/')
+def index():
+    return render_template('news.html')
+
+@app.route('/login',methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return redirect('login')
+    
+    elif request.method == 'POST':
+        if request.form["user-name"]=="opscen" and request.form["pass-word"]=="opscen":
+            return redirect('upload')
+        else:
+            return redirect('login')
+
+@app.route("/upload",methods=['GET', 'POST'])
 def upload():
     if request.method == 'GET':
-        return render_template('news.html')
+        return render_template('upload.html')
     
     elif request.method == 'POST': 
         k = request.files['file']
@@ -359,9 +375,6 @@ def upload():
         
         return "already parse the file and store at app/Preprocess/data/news_stories_final_2.csv"
  
-@app.route('/')
-def index():
-    return redirect(url_for('upload'), 302)
  
 
 

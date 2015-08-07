@@ -53,7 +53,7 @@ def index():
 @app.route('/login',methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        return redirect('login')
+        return render_template('login.html')
     
     elif request.method == 'POST':
         if request.form["user-name"]=="opscen" and request.form["pass-word"]=="opscen":

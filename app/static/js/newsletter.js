@@ -563,7 +563,7 @@
       }
       function brushend() {
             svg.classed("selecting", !d3.event.target.empty());
-//            populate_on_load();
+            populate_on_load();
       }
   } 
 

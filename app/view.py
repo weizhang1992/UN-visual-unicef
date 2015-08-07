@@ -125,7 +125,7 @@ def upload():
                 currs['region'] = regions_codes[element]
                 flags['country'] = True
                 return 
-            print element
+            
             if flags['link'] and 'http' in element:
                 data['region'].append(currs['region'])
                 data['country'].append(currs['country'])
@@ -365,14 +365,16 @@ def upload():
         df['category2'][(df['category']==df['category2'])] = ''
         df = df.drop(['category4'], axis=1)
         
-        
-        # a= pd.read_csv("data/news_stories_final.csv")
-        # result = a.append(df, ignore_index=True)
-        
-        
-        
-        df.to_csv('app/Preprocess/data/news_stories_final_2.csv', index_label='row_index', index=True, date_format='%m/%d/%Y')
-        
+        df['date'] = df['date'].apply(lambda x: x.strftime('%m/%d/%Y'))
+
+               
+        a= pd.read_csv("app/static/data/news_stories_final.csv")
+        result = a.append(df, ignore_index=True)
+         
+         
+         
+        result.to_csv('app/static/data/news_stories_final.csv', index_label='row_index', index=True, date_format='%m/%d/%Y')
+#         df.to_csv('app/Preprocess/data/news_stories_final_2.csv', index_label='row_index', index=True, date_format='%m/%d/%Y')
         return "already parse the file and store at app/Preprocess/data/news_stories_final_2.csv"
  
  

@@ -92,8 +92,7 @@
 
   // load the data once and draw the map and the trend chart
   d3.csv("static/data/news_stories_final.csv", function(error, data) {
-      map_data = data
-          .sort(function(a, b){
+      map_data = data.sort(function(a, b){
               var date1 = new Date(a.date),
               date2 = new Date(b.date);
               if (date1<date2){
@@ -105,11 +104,13 @@
               return 0;
           });
 
-      minStartDate = parseExactDate(d3.min(map_data,function(d){return d.date;}));
-      maxStartDate = parseExactDate(d3.max(map_data,function(d){return d.date;}));
-      minStartWeek = parseDate(d3.min(map_data,function(d){return d.week_year;}));
-      maxStartWeek = parseDate(d3.max(map_data,function(d){return d.week_year;}));
+      minStartDate = parseExactDate(map_data[map_data.length-1].date);
+      maxStartDate = parseExactDate(map_data[0].date);
+      minStartWeek = parseDate(map_data[map_data.length-1].week_year);
+      maxStartWeek = parseDate(map_data[0].week_year);
 
+      console.log(maxStartWeek); 
+      
       var oneWeek = 24*60*60*1000*7; 
       var numberOfBars = Math.ceil((maxStartWeek-minStartWeek)/oneWeek);
       barWidth = width_trend/(numberOfBars);
@@ -122,11 +123,11 @@
           .scale(x)
           .orient("bottom")
           .ticks(d3.time.weeks, 4)
-          .tickFormat(d3.time.format('%b %Y'));
+          .tickFormat(d3.time.format('%b %y'));
       draw_all();
       populate_on_load();
   });
-
+  
   d3.selectAll(".filter-button").on("click", function() {
       var currButton = d3.select(this);
       if (currButton.attr('checked')){
@@ -352,7 +353,7 @@
               
           });
 
-  console.log(active_circles)
+//  console.log(active_circles)
   }
 
 

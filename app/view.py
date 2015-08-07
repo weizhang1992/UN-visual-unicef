@@ -1,5 +1,5 @@
 #coding=utf-8
-from flask import Flask,request,url_for,render_template,redirect
+from flask import Flask,request,url_for,session,render_template,redirect
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.mail import Mail
 from werkzeug.utils import secure_filename
@@ -50,7 +50,6 @@ unique_countries = set()
 def index():
     return render_template('news.html')
 
-
 @app.route('/about',methods=['GET', 'POST'])
 def about():
     return render_template('about.html')
@@ -66,6 +65,7 @@ def login():
     
     elif request.method == 'POST':
         if request.form["user-name"]=="opscen" and request.form["pass-word"]=="opscen":
+            session['log']=True
             return redirect('upload')
         else:
             return redirect('login')
@@ -73,7 +73,10 @@ def login():
 @app.route("/upload",methods=['GET', 'POST'])
 def upload():
     if request.method == 'GET':
-        return render_template('upload.html')
+        if not session.get('log'):
+            return redirect('login') 
+        else:
+            return render_template('upload.html')
     
     elif request.method == 'POST': 
         k = request.files['file']

@@ -92,6 +92,7 @@
 
   // load the data once and draw the map and the trend chart
   d3.csv("static/data/news_stories_final.csv", function(error, data) {
+	  
       map_data = data.sort(function(a, b){
               var date1 = new Date(a.date),
               date2 = new Date(b.date);
@@ -562,7 +563,7 @@
       }
       function brushend() {
             svg.classed("selecting", !d3.event.target.empty());
-            //populate_on_load();
+            populate_on_load();
       }
   } 
 

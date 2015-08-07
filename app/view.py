@@ -50,6 +50,15 @@ unique_countries = set()
 def index():
     return render_template('news.html')
 
+
+@app.route('/about',methods=['GET', 'POST'])
+def about():
+    return render_template('about.html')
+
+@app.route('/Eva',methods=['GET', 'POST'])
+def Eva():
+    return render_template('eva.html')
+
 @app.route('/login',methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':

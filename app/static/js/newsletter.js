@@ -109,7 +109,7 @@
       minStartWeek = parseDate(map_data[map_data.length-1].week_year);
       maxStartWeek = parseDate(map_data[0].week_year);
 
-      console.log(maxStartWeek); 
+      console.log(minStartDate); 
       
       var oneWeek = 24*60*60*1000*7; 
       var numberOfBars = Math.ceil((maxStartWeek-minStartWeek)/oneWeek);

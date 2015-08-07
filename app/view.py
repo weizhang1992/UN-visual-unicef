@@ -375,7 +375,7 @@ def upload():
          
         result.to_csv('app/static/data/news_stories_final.csv', index_label='row_index', index=True, date_format='%m/%d/%Y')
 #         df.to_csv('app/Preprocess/data/news_stories_final_2.csv', index_label='row_index', index=True, date_format='%m/%d/%Y')
-        return "already parse the file and store at app/Preprocess/data/news_stories_final_2.csv"
+        return redirect('/')
  
  
 

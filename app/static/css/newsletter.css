@@ -1,24 +1,27 @@
-#hh{
+
+#hhhh h4{
 	text-align:center;
-}
-#uploadform{
-	height:50px;
-	board:black;
+	 margin:0px;
 }
 
-#uploadform form #choosefile{
-	
-   width:30%;
-   margin: 20px;
-   display: inline-block;
-   float:left;
+#filters{
+	 margin:10px;
 }
-#uploadform form #uploadbutton{
-	margin: 15px;
+
+#loginform{
+	height:30px;
+	board:black;
+	float:right;
+	margin:10px;
+	 
+}
+
+
+#loginform form #uploadbutton{
+   
    width:14%;
-   margin: 0px;
    display: inline-block;
-   float:left;
+   float:right;
 }
 
 .full-width-container {

@@ -19,6 +19,7 @@ import re
 from nltk.stem.porter import PorterStemmer
 
 app = Flask(__name__)
+
 app.config['SQLALCHEMY_DATABASE_URI']="mysql://root:server@localhost/contact?charset=utf8"
 app.config.from_object(config)
 app.secret_key=app.config['SECERT_KEY']
